@@ -12,6 +12,7 @@
 #include <iostream>
 #include <string>
 #include "console.h"
+#include "simpio.h"
 using namespace std;
 
 /* Constants */
@@ -48,7 +49,7 @@ int main() {
 int hashCode(string str) {
     unsigned hash = HASH_SEED;
     int nchars = str.length();
-    for (i = 0; i < nchars; i++) {
+    for (int i = 0; i < nchars; i++) {
         hash = HASH_MULTIPLIER * hash + str[i];
     }
     return (hash & HASH_MASK);
