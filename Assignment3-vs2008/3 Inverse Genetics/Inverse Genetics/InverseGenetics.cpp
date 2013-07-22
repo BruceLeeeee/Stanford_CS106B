@@ -16,6 +16,18 @@
 #include "console.h"
 using namespace std;
 
+void recList(string soFar, string protein, Map<char, Set<string> >& codons) {
+	if (protein.empty()) {
+		cout << soFar << endl;
+		return;
+	} else {
+		Set<string> s = codons[protein[0]];
+		for (Set<string>::iterator itr = s.begin(); itr != s.end(); itr++) {
+			recList(soFar + *itr, protein.substr(1), codons);
+		}
+	}
+}
+
 /* Function: listAllRNAStrandsFor(string protein,
  *                                Map<char, Set<string> >& codons);
  * Usage: listAllRNAStrandsFor("PARTY", codons);
@@ -24,7 +36,9 @@ using namespace std;
  * that code, lists all possible RNA strands that could generate
  * that protein
  */
-void listAllRNAStrandsFor(string protein, Map<char, Set<string> >& codons);
+void listAllRNAStrandsFor(string protein, Map<char, Set<string> >& codons) {
+	recList("", protein, codons);
+}
 
 /* Function: loadCodonMap();
  * Usage: Map<char, Lexicon> codonMap = loadCodonMap();
@@ -36,6 +50,11 @@ Map<char, Set<string> > loadCodonMap();
 int main() {
     /* Load the codon map. */
     Map<char, Set<string> > codons = loadCodonMap();
+	string protein;
+
+	cout << "Please inpute a protein: ";
+	cin >> protein;
+	listAllRNAStrandsFor(protein, codons);
 
     /* [TODO: Implement this!] */
     return 0;
