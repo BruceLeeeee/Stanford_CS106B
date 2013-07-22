@@ -16,9 +16,21 @@ using namespace std;
  * returns the number of paths Karel can take back home that only
  * moves left or down.
  */
-int numPathsHome(int street, int avenue);
+int numPathsHome(int street, int avenue) {
+	if (street == 0 || avenue == 0)
+		return 0;
+	if (street == 1 && avenue == 1)
+		return 1;
+	return numPathsHome(street - 1, avenue) + numPathsHome(street, avenue - 1);
+}
 
 int main() {
     // [TODO: fill with your code]
+	int street, avenue;
+	cout << "street = ";
+	cin >> street;
+	cout << "avenue = ";
+	cin >> avenue;
+	cout << numPathsHome(street, avenue) << endl;
     return 0;
 }
