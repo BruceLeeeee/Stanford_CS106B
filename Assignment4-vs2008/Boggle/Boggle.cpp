@@ -61,7 +61,7 @@ int initBoard() {
 	char choice;
 	cin >> choice;
 	cout << endl;
-	if (choice == 'Y') {
+	if (toupper(choice) == 'Y') {
 		drawBoard(5, 5);
 		return 5;
 	}
@@ -88,7 +88,7 @@ void pickCubeLettersByPlayer(Grid<char> &cubes) {
 			cout << " characters! Try again: ";
 	}
 	for (int i = 0; i < str.length(); i++)
-		cubes[i / cubes.nRows][i % cubes.nCols] = str[i];
+		cubes[i / cubes.nRows][i % cubes.nCols] = toupper(str[i]);
 }
 
 void copyArray(Vector<string> &cubeStrs, int gridSize) {
@@ -142,7 +142,7 @@ void setupCubes(Grid<char> &cubes, int gridSize) {
 	cout << "Do you want to force the board configuration? (Y or N)";
 	char choice;
 	cin >> choice;
-	if (choice == 'Y')
+	if (toupper(choice) == 'Y')
 		pickCubeLettersByPlayer(cubes);
 	else 
 		pickCubeLetters(cubes);
@@ -161,15 +161,15 @@ bool outOfBound(int x, int y, int gridSize) {
 }
 
 /*
- * check whether a word exist starting at (x, y) given the visisted board constraint
+ * check whether a word exist starting at (x, y) given the visited board constraint
  * if exist, the path would be stored in vector path
  */
-bool hasWord(int x, int y, string &word, Grid<char> &cubes, bool visisted[5][5], Vector<location> &path) {
+bool hasWord(int x, int y, string &word, Grid<char> &cubes, bool visited[5][5], Vector<location> &path) {
 	if (word.empty())
 		return true;
 	if (cubes[x][y] != toupper(word[0]))
 		return false;
-	visisted[x][y] = true;
+	//visited[x][y] = true;
 	int dir[8][2] = {{-1, -1}, {-1, 0}, {-1, 1}, {0, 1}, {1, 1}, {1, 0}, {1, -1}, {0, -1}};
 	int flag = false;
 	for (int i = 0; i < 8; i++) {
@@ -178,12 +178,12 @@ bool hasWord(int x, int y, string &word, Grid<char> &cubes, bool visisted[5][5],
 		int yNext = y + dir[i][1];
 		if (outOfBound(xNext, yNext, cubes.nRows))
 			continue;
-		if (visisted[xNext][yNext])
+		if (visited[xNext][yNext])
 			continue;
-	    visisted[x][y] = true;
+	    visited[x][y] = true;
 		Vector<location> pathTmp;
-		flag = hasWord(xNext, yNext, rest, cubes, visisted, pathTmp);
-		visisted[x][y] = false;
+		flag = hasWord(xNext, yNext, rest, cubes, visited, pathTmp);
+		visited[x][y] = false;
 		if (flag) {
 			location loc;
 			loc.x = x;
@@ -200,7 +200,7 @@ bool hasWord(int x, int y, string &word, Grid<char> &cubes, bool visisted[5][5],
 void highlightCubes(Vector<location> &path) {
 	for (int i = 0; i < path.size(); i++)
 		highlightCube(path[i].x, path[i].y, true);
-	pause(100);
+	pause(500);
 	for (int i = 0; i < path.size(); i++)
 		highlightCube(path[i].x, path[i].y, false);
 }
@@ -209,14 +209,14 @@ void highlightCubes(Vector<location> &path) {
  * check whether a word is on board, if true, highlight the word on board
  */
 bool onBoard(string &word, Grid<char> &cubes) {
-	bool visisted[5][5];
+	bool visited[5][5];
 	Vector<location> path;
 	for (int i = 0; i < 5; i++)
 		for (int j = 0; j < 5; j++)
-			visisted[i][j] = false;
+			visited[i][j] = false;
 	for (int i = 0; i < cubes.nRows; i++)
 		for (int j = 0; j < cubes.nCols; j++)
-			if (hasWord(i, j, word, cubes, visisted, path)) {
+			if (hasWord(i, j, word, cubes, visited, path)) {
 				highlightCubes(path);
 				return true;
 			}
@@ -249,9 +249,11 @@ void playerTurn(Lexicon &english, Lexicon &wordFound, Grid<char> &cubes) {
 	cout << "re finished by entering an empty line." << endl;
 	cout << endl;
 	string word;
+	getLine();
 	while (true) {
 		cout << "Enter a word: ";
-		cin >> word;
+		word = getLine();
+		//cin >> word;
 		if (word.empty())
 			break;
 		if (isLegal(english, wordFound, cubes, word)) {
@@ -259,13 +261,52 @@ void playerTurn(Lexicon &english, Lexicon &wordFound, Grid<char> &cubes) {
 			recordWordForPlayer(word, HUMAN);
 		}
 	}
+	cout << endl;
+}
+
+/*
+ * recursively list all remaining words 
+ */
+void recListAllWords(string soFar, int x, int y, Lexicon &english, Lexicon &wordFound,
+					 Grid<char> &cubes, bool visited[5][5]) {
+	if (!english.containsPrefix(soFar))
+		return;
+	if (soFar.length() >= 4 && !wordFound.contains(soFar) && english.contains(soFar)) {
+		recordWordForPlayer(soFar, COMPUTER);
+		wordFound.add(soFar);
+	}
+	int dir[8][2] = {{-1, -1}, {-1, 0}, {-1, 1}, {0, 1}, {1, 1}, {1, 0}, {1, -1}, {0, -1}};
+	for (int i = 0; i < 8; i++) {
+		int xNext = x + dir[i][0];
+		int yNext = y + dir[i][1];
+		if (outOfBound(xNext, yNext, cubes.nRows))
+			continue;
+		if (visited[xNext][yNext])
+			continue;
+		visited[xNext][yNext] = true;
+		recListAllWords(soFar + cubes[xNext][yNext], xNext, yNext, english, wordFound, cubes, visited);
+		visited[xNext][yNext] = false;
+	}
+}
+
+void computerTurn(Lexicon &english, Lexicon &wordFound, Grid<char> &cubes) {
+	bool visited[5][5];
+	for (int i = 0; i < 5; i++)
+		for (int j = 0; j < 5; j++)
+			visited[i][j] = false;
+	for (int i = 0; i < cubes.nRows; i++)
+		for (int j = 0; j < cubes.nCols; j++) {
+			visited[i][j] = true;
+			recListAllWords(string() + cubes[i][j], i, j, english, wordFound, cubes, visited);
+			visited[i][j] = false;
+		}
 }
 
 void play(Grid<char> &cubes) {
 	Lexicon english("EnglishWords.dat");
 	Lexicon wordFound;
 	playerTurn(english, wordFound, cubes);
-	//computerTurn(english, wordFound, cubes);
+	computerTurn(english, wordFound, cubes);
 }
 
 int main() {
@@ -274,8 +315,15 @@ int main() {
     initGBoggle(gw);
     welcome();
     giveInstructions();
-	setup(cubes);
-	play(cubes);
+	while (true) {
+		setup(cubes);
+		play(cubes);
+		char choice;
+		cout << "Would you like to play again? (Y or N)";
+		cin >> choice;
+		if (toupper(choice) == 'N')
+			break;
+	}
     return 0;
 }
 
