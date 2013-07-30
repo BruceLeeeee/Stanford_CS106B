@@ -19,28 +19,47 @@ VectorPriorityQueue::~VectorPriorityQueue() {
 int VectorPriorityQueue::size() {
 	// TODO: Fill this in!
 	
-	return 0;
+	return pqueue.size();
 }
 
 bool VectorPriorityQueue::isEmpty() {
 	// TODO: Fill this in!
 	
-	return true;
+	return pqueue.size() == 0;
 }
 
 void VectorPriorityQueue::enqueue(string value) {
 	// TODO: Fill this in!
+	pqueue.push_back(value);
+}
+
+//
+int VectorPriorityQueue::findMin() {
+	int minIndex = 0;
+	string min = pqueue[0];
+	for (int i = 1; i < pqueue.size(); i++)
+		if (pqueue[i] < min) {
+			min = pqueue[i];
+			minIndex = i;
+		}
+	return minIndex;
 }
 
 string VectorPriorityQueue::peek() {
 	// TODO: Fill this in!
-	
-	return "";
+	if (isEmpty())
+		error("peek error: pqueue is empty");
+	int index = findMin();
+	return pqueue[index];
 }
 
 string VectorPriorityQueue::dequeueMin() {
 	// TODO: Fill this in!
-	
-	return "";
+	if (isEmpty())
+		error("dequeue error: pqueue is empty");
+	int index = findMin();
+	string min = pqueue[index];
+	pqueue.remove(index);
+	return min;
 }
 
