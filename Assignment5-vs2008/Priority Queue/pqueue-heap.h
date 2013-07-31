@@ -47,6 +47,13 @@ private:
 	//
 	// While you are free to implement this as you see fit, you *must* do
 	// all of your own memory management and should not use the Vector.
+	string *minHeap;
+	int usedCount;
+	int allocatedCount;
+	void enlarge(); // double the size of the array
+	void bubbleUp(int index);
+	void swap(string &a, string &b);
+	void bubbleDown(int index);
 };
 
 #endif

@@ -44,6 +44,16 @@ private:
 	// TODO: Fill this in with the implementation of your doubly-linked list
 	// priority queue.  You can add any fields, types, or methods that you
 	// wish.
+	struct node {
+		string value;
+		struct node *prev;
+		struct node *next;
+	};
+	node *head, *dummy;
+	int pqueueSize; // size
+	/* find the lexicographically first string and return its pointer in pqueue
+	 */
+	node * findMin(node *cur);
 };
 
 #endif
