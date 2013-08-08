@@ -9,11 +9,12 @@
 #include "TrailblazerGraphics.h"
 #include "TrailblazerTypes.h"
 #include "TrailblazerPQueue.h"
+#include "random.h"
 using namespace std;
 
 #define P 1e-6
 
-void init(Loc &start,
+void initSP(Loc &start,
 		  Grid<Loc> &parent,
 		  Grid<Color> &cellColor,
 		  Grid<double> &dist,
@@ -85,7 +86,7 @@ shortestPath(Loc start,
 	int dir[8][2] = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}};
 	Vector<Loc> path;
 	TrailblazerPQueue<Loc> pqueue;
-	init(start, parent, cellColor, dist, world);
+	initSP(start, parent, cellColor, dist, world);
 	cellColor[start.row][start.col] = YELLOW;
 	colorCell(world, start, YELLOW);
 	parent[start.row][start.col] = start;
@@ -123,8 +124,70 @@ shortestPath(Loc start,
     return path;
 }
 
+void initMST (int numRows, int numCols, Vector<int> &parent, TrailblazerPQueue<Edge> &pqueue) {
+	int dir[2][2] = {{-1, 0}, {0, 1}};
+	for (int i = 0; i < numRows; i++)
+		for (int j = 0; j < numCols; j++) {
+			int node = i * numCols + j;
+			parent[node] = node;
+		}
+	
+	for (int i = 0; i < numRows; i++)
+		for (int j = 0; j < numCols; j++)
+			for (int k = 0; k < 2; k++) {
+				int rNext = i + dir[k][0];
+				int cNext = j + dir[k][1];
+				if (isOutOfBounds(rNext, cNext, numRows, numCols))
+					continue;
+				Edge edge;
+				Loc loc1;
+				Loc loc2;
+				loc1.row = i;
+				loc1.col = j;
+				loc2.row = rNext;
+				loc2.col = cNext;
+				edge.start = loc1;
+				edge.end = loc2;
+				double len = randomReal(0, 1);
+				pqueue.enqueue(edge, len);
+			}
+
+}
+
+// use disjoint-set data structure with Path Compression
+int find(int node, Vector<int> &parent) {
+	if (parent[node] == node)
+		return node;
+	else {
+		int root = find(parent[node], parent);
+		parent[node] = root;
+		return root;
+	}
+}
+
 Set<Edge> createMaze(int numRows, int numCols) {
 	// TODO: Fill this in!
-	error("createMaze is not implemented yet.");
-    return Set<Edge>();
+	//error("createMaze is not implemented yet.");
+	Set<Edge> mst;
+	Vector<int> parent(numRows * numCols);
+	TrailblazerPQueue<Edge> pqueue;
+	int clusterCount = numRows * numCols;
+	initMST(numRows, numCols, parent, pqueue);
+	while (!pqueue.isEmpty()) {
+		Edge edge = pqueue.dequeueMin();
+		Loc loc1 = edge.start;
+		Loc loc2 = edge.end;
+		int node1 = loc1.row * numCols + loc1.col;
+		int node2 = loc2.row * numCols + loc2.col;
+		int node1Root = find(node1, parent);
+		int node2Root = find(node2, parent);
+		if (node1Root == node2Root)
+			continue;
+		mst.add(edge);
+		parent[node1Root] = node2Root;
+		clusterCount--;
+		if (clusterCount == 1)
+			break;
+	}
+    return mst;
 }
